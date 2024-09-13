@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Chat with AI</h1>
+        <div id="chat-box">
+            <!-- Chat messages will be displayed here -->
+        </div>
+        
+        <!-- Radio Button to enable or disable internet usage -->
+        <div id="internet-toggle">
+            <label>
+                <input type="radio" name="internet" value="11" checked> Enable Web Access
+            </label>
+            <label>
+                <input type="radio" name="internet" value="10"> Disable Web Access
+            </label>
+        </div>
+
+        <form id="chat-form">
+            <input type="text" id="user-input" placeholder="Type your message here..." required>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+
+    <script>
+        function linkify(text) {
+            // Convert URLs into clickable links
+            const urlPattern = /(\b(https?|ftp|file):\/\/[^\s<>"']+)/gi;
+            text = text.replace(urlPattern, (url) => {
+                const encodedUrl = encodeURI(url); // Handle special characters
+                return `<a href="${encodedUrl}" target="_blank">${url}</a>`;
+            });
+            
+            // Convert text surrounded by ** to bold
+            const boldPattern = /\*\*(.*?)\*\*/g;
+            text = text.replace(boldPattern, '<strong>$1</strong>');
+
+            return text;
+        }
+
+        document.getElementById('chat-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const userInput = document.getElementById('user-input').value;
+            const chatBox = document.getElementById('chat-box');
+            document.getElementById('user-input').value = '';
+
+            // Get the selected internet option (11 for enabled, 10 for disabled)
+            const internetOption = document.querySelector('input[name="internet"]:checked').value;
+
+            // Display user's input in the chat box
+            chatBox.innerHTML += `<p><strong>You:</strong> ${userInput}</p>`;
+            
+            // Send the user's input and internet option to the server
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({prompt: userInput, ia: internetOption}) // Sends "ia" value based on radio button selection
+            })
+            .then(response => response.json())
+            .then(data => {
+                const formattedResponse = linkify(data.response);
+                chatBox.innerHTML += `<p><strong>AI:</strong> ${formattedResponse}</p>`;
+                
+                // Scroll to the bottom of the chat box
+                chatBox.scrollTop = chatBox.scrollHeight;
+                
+                // Clear the input field after sending the message
+                
+            });
+        });
+    </script>
+</body>
+</html>
